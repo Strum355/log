@@ -19,7 +19,7 @@ const (
 	LogError
 )
 
-type Logger interface {
+type logger interface {
 	createLogPoint(log logPoint)
 }
 
@@ -44,7 +44,7 @@ type Config struct {
 	// Will print error level to StdErr
 	// UseStdErr is ignored if Output != os.Stdout
 	UseStdErr    bool
-	logger       Logger
+	logger       logger
 	levelPadding int
 }
 
