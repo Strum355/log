@@ -9,7 +9,7 @@ import (
 type Fields map[string]interface{}
 
 func WithFields(f Fields) *Entry {
-	return &Entry{fields: f, callDepth: callDepth - 1}
+	return &Entry{fields: f}
 }
 
 func (e *Entry) WithFields(f Fields) *Entry {
@@ -40,7 +40,7 @@ func (f Fields) format() string {
 	var iterCount int
 	for _, k := range keys {
 		v := f[k]
-		s := strings.TrimSpace(fmt.Sprintf("%s=%v", k, v))
+		s := strings.TrimSpace(fmt.Sprintf("%s='%v'", k, v))
 		if iterCount < len(f)-1 {
 			s += " "
 		}

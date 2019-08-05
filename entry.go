@@ -3,31 +3,25 @@ package log
 import (
 	"io"
 	"os"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/opentracing/opentracing-go"
-
-	"github.com/bwmarrin/lit"
-)
-
-const (
-	callDepth = 4
 )
 
 type Entry struct {
-	callDepth int
-	fields    Fields
-	span      opentracing.Span
+	fields Fields
+	span   opentracing.Span
 }
 
-var emptyEntry = &Entry{callDepth: callDepth}
+var emptyEntry = &Entry{}
 
 func WithError(err error) *Entry {
 	return &Entry{
 		fields: Fields{
 			"error": err,
 		},
-		callDepth: callDepth - 1,
 	}
 }
 
@@ -37,17 +31,16 @@ func (e *Entry) WithError(err error) *Entry {
 	})
 }
 
-func WithSpan(span opentracing.Span) *Entry {
+/* func WithSpan(span opentracing.Span) *Entry {
 	return &Entry{
-		span:      span,
-		callDepth: callDepth - 1,
+		span: span,
 	}
 }
 
 func (e *Entry) WithSpan(span opentracing.Span) *Entry {
 	e.span = span
 	return e
-}
+} */
 
 func (e *Entry) Clone() *Entry {
 	fields := make(Fields, len(e.fields))
@@ -55,62 +48,97 @@ func (e *Entry) Clone() *Entry {
 		fields[k] = v
 	}
 	return &Entry{
-		fields:    fields,
-		callDepth: e.callDepth,
-		span:      e.span,
+		fields: fields,
+		span:   e.span,
 	}
 }
 
-// ResetCallDepth should be called if not chaining a log call after
-// calling precursor methods
-//
-// eg:
-// e := log.WithFields(...)
-// e.ResetCallDepth()
-// e.Info(...)
-func (e *Entry) ResetCallDepth() {
-	e.callDepth = callDepth
+func Debug(msg string) {
+	emptyEntry.Debug(msg)
 }
 
-func Debug(format string, a ...interface{}) {
-	emptyEntry.Debug(format, a...)
+func (e *Entry) Debug(msg string) {
+	e.log(LogDebug, msg)
 }
 
-func (e *Entry) Debug(format string, a ...interface{}) {
-	e.log(lit.LogDebug, format, a...)
+func Info(msg string) {
+	emptyEntry.Info(msg)
 }
 
-func Info(format string, a ...interface{}) {
-	emptyEntry.Info(format, a...)
+func (e *Entry) Info(msg string) {
+	e.log(LogInformational, msg)
 }
 
-func (e *Entry) Info(format string, a ...interface{}) {
-	e.log(lit.LogInformational, format, a...)
+func Warn(msg string) {
+	emptyEntry.Warn(msg)
 }
 
-func Warn(format string, a ...interface{}) {
-	emptyEntry.Warn(format, a...)
+func (e *Entry) Warn(msg string) {
+	e.log(LogWarning, msg)
 }
 
-func (e *Entry) Warn(format string, a ...interface{}) {
-	e.log(lit.LogWarning, format, a...)
+func Error(msg string) {
+	emptyEntry.Error(msg)
 }
 
-func Error(format string, a ...interface{}) {
-	emptyEntry.Error(format, a...)
+func (e *Entry) Error(msg string) {
+	e.log(LogError, msg)
 }
 
-func (e *Entry) Error(format string, a ...interface{}) {
-	e.log(lit.LogError, format, a...)
-}
+func (e *Entry) log(level LogLevel, format string) {
+	if level < config.LogLevel {
+		return
+	}
 
-func (e *Entry) log(level int, format string, a ...interface{}) {
+	now := time.Now()
+
 	builder := new(strings.Builder)
-	lit.Custom(builder, level, e.callDepth, format, a...)
-	builder.WriteString(e.fields.format())
-	if level == lit.LogError && config.UseStdErr {
+
+	file, fileLine, funcName := getFunctionInfo()
+
+	config.logger.createLogPoint(logPoint{builder, level, fileLine, file, funcName, format, e.fields, now})
+
+	if level == LogError && config.UseStdErr {
 		io.WriteString(os.Stderr, builder.String())
 	} else {
 		io.WriteString(config.Output, builder.String())
 	}
+}
+
+func getPrefix(level LogLevel) string {
+	if level == LogError {
+		return config.ErrorPrefix
+	} else if level == LogWarning {
+		return config.WarnPrefix
+	} else if level == LogInformational {
+		return config.InfoPrefix
+	}
+	return config.DebugPrefix
+}
+
+func getFunctionInfo() (file string, line int, name string) {
+	pc, _, _, _ := runtime.Caller(0)
+
+	// get package name and filename
+	ownPkgName := strings.Join(strings.Split(runtime.FuncForPC(pc).Name(), ".")[:2], ".")
+
+	pkgName := ownPkgName
+
+	callDepth := 1
+	// find the first package that isnt this one, excluding our tests
+	for pkgName == ownPkgName && !strings.HasSuffix(file, "_test.go") {
+		pc, file, line, _ = runtime.Caller(callDepth)
+
+		files := strings.Split(file, "/")
+		file = files[len(files)-1]
+
+		pkgName = strings.Join(strings.Split(runtime.FuncForPC(pc).Name(), ".")[:2], ".")
+
+		name = runtime.FuncForPC(pc).Name()
+		fns := strings.Split(name, ".")
+		name = fns[len(fns)-1]
+		callDepth++
+	}
+
+	return
 }
