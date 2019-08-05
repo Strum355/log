@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	logRegex = regexp.MustCompile(`^(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\+|-)\d{2}:\d{2} )\[(\w{4,5} ?)\] ([^:]+):\d+:(.+\(\)) (.+)$`)
+	logRegex = regexp.MustCompile(`^(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:Z|(?:\+|-)\d{2}:\d{2})) \[(\w{4,5} ?)\] ([^:]+):\d+:(.+\(\)) (.+)$`)
 	b        = new(strings.Builder)
 )
 
