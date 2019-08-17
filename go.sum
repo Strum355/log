@@ -1,5 +1,3 @@
-github.com/bwmarrin/lit v0.0.0-20190731131422-ed77ed2b8c15 h1:2/P8xVRkXu2NtFLHhh6ozpp0cpLy7xinW/hWnK2GJ+g=
-github.com/bwmarrin/lit v0.0.0-20190731131422-ed77ed2b8c15/go.mod h1:z4cxqo0ARxc42jGHYZT4XoICeLf9OVOkysN7LuqBZ24=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/opentracing/opentracing-go v1.1.0 h1:pWlfV3Bxv7k65HYwkikxat0+s3pV4bsqf19k25Ur8rU=
