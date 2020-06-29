@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"io"
 	"os"
 	"runtime"
@@ -9,6 +10,10 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 )
+
+type logKey struct{}
+
+var Key logKey = struct{}{}
 
 type Entry struct {
 	fields Fields
@@ -29,6 +34,21 @@ func (e *Entry) WithError(err error) *Entry {
 	return e.WithFields(Fields{
 		"error": err,
 	})
+}
+
+func (e *Entry) WithContext(ctx context.Context) *Entry {
+	if fields, ok := ctx.Value(Key).(*Fields); ok {
+		*e = *e.WithFields(*fields)
+	}
+	return e
+}
+
+func WithContext(ctx context.Context) *Entry {
+	e := new(Entry)
+	if fields, ok := ctx.Value(Key).(Fields); ok {
+		e.fields = fields
+	}
+	return e
 }
 
 /* func WithSpan(span opentracing.Span) *Entry {

@@ -1,6 +1,7 @@
 package log_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -588,6 +589,23 @@ func Test_SimpleLogger(t *testing.T) {
 
 		if ok, fields := hasField("hello", "world", b.String(), t); ok {
 			t.Errorf("expected to not have '%s=%s' but it did: '%s'", "hello", "world", fields)
+		}
+	})
+
+	t.Run("Context", func(t *testing.T) {
+		defer b.Reset()
+		log.InitSimpleLogger(&log.Config{
+			Output: b,
+		})
+
+		ctx := context.WithValue(context.Background(), log.Key, log.Fields{
+			"sample": "text",
+		})
+
+		log.WithContext(ctx).Info("hello epic reddit")
+
+		if ok, fields := hasField("sample", "text", b.String(), t); !ok {
+			t.Errorf("expected fields to contain: '%s=%v'. actual fields total: %s", "sample", "text", fields)
 		}
 	})
 }
