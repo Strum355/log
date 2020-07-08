@@ -3,7 +3,7 @@ name: default
 
 steps:
 - name: lint
-  image: golang:1.12
+  image: golang:1.14
   commands:
   - bash -c "if [[ \$(gofmt -l *.go) ]]; then gofmt -l *.go; exit 1; fi"
   - bash -c "if [[ \$(goimports -d *.go) ]]; then goimports -d *.go; exit 1; fi"
@@ -14,7 +14,7 @@ steps:
       - master
 
 - name: test
-  image: golang:1.12
+  image: golang:1.14
   commands:
   - go test github.com/Strum355/log -v
   when:
@@ -31,3 +31,6 @@ steps:
   commands:
     - lsif-go
     - src lsif upload -github-token=$${GITHUB_TOKEN}
+  when:
+    branch:
+      - master
