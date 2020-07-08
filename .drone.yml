@@ -11,7 +11,7 @@ steps:
     event:
       - push    
     branch:
-      - master  
+      - master
 
 - name: test
   image: golang:1.12
@@ -21,4 +21,13 @@ steps:
     event:
       - push    
     branch:
-      - master    
+      - master
+
+- name: sourcegraph_lsif
+  image: sourcegraph/lsif-go
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  commands:
+    - lsif-go
+    - src lsif upload -github-token=$${GITHUB_TOKEN}
